@@ -1,0 +1,1625 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Outfit:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --lol-gold-1:    #c8aa6e;
+  --lol-gold-2:    #c89b3c;
+  --lol-gold-3:    #785a28;
+  --lol-gold-4:    #463714;
+  --lol-gold-light:#f0e6d3;
+  --lol-blue-1:    #0bc4e3;
+  --lol-blue-2:    #0397ab;
+  --lol-blue-3:    #005a82;
+  --lol-blue-dark: #010a13;
+  --lol-blue-mid:  #0a1428;
+  --lol-teal:      #0bc4e3;
+  --lol-grey-1:    #a09b8c;
+  --lol-grey-2:    #5b5a56;
+  --lol-grey-cool: #1e2328;
+  --lol-red:       #ae2a20;
+  --lol-green:     #0bc47f;
+
+  --bg-void:    #010a13;
+  --bg-deep:    #0a1428;
+  --bg-surface: #0d1b2a;
+  --bg-glass:   rgba(1, 10, 19, 0.82);
+
+  --border-gold:  rgba(200, 170, 110, 0.35);
+  --border-blue:  rgba(11, 196, 227, 0.2);
+  --border-light: rgba(255,255,255,0.06);
+
+  --glow-gold: rgba(200, 155, 60, 0.4);
+  --glow-blue: rgba(11, 196, 227, 0.3);
+
+  --font-display: 'Cinzel', 'Times New Roman', serif;
+  --font-body:    'Outfit', sans-serif;
+
+  --r-sm:  6px;
+  --r-md:  10px;
+  --r-lg:  16px;
+  --r-xl:  22px;
+
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-void);
+  color: var(--lol-gold-light);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.65;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Couche 1 — image LoL */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--lol-bg);
+  background-size: cover;
+  background-position: center 20%;
+  background-repeat: no-repeat;
+  filter: brightness(0.28) saturate(1.3);
+  z-index: 0;
+}
+
+/* Couche 2 — gradients + hexagones */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 140% 80% at 20% -5%,  rgba(11,196,227,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 100% 60% at 80% 110%, rgba(200,155,60,0.05) 0%, transparent 50%),
+    linear-gradient(180deg, rgba(1,10,19,0.3) 0%, rgba(1,10,19,0.85) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpath d='M28 66L0 50V17L28 0l28 17v33L28 66zm0 34L0 83V50l28 16 28-16v33L28 100z' fill='none' stroke='rgba(200,170,110,0.035)' stroke-width='1'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ═══════════════════════════════════════════
+   AUTH LAYOUT
+═══════════════════════════════════════════ */
+.auth-container {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-card {
+  position: relative;
+  background: var(--bg-glass);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-lg);
+  padding: 44px 40px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow:
+    0 0 0 1px rgba(200,170,110,0.08),
+    0 32px 80px rgba(0,0,0,0.9),
+    0 0 60px rgba(11,196,227,0.03) inset;
+  animation: cardReveal 0.7s var(--ease-out) both;
+  overflow: hidden;
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--lol-gold-3) 20%,
+    var(--lol-gold-1) 50%,
+    var(--lol-gold-3) 80%,
+    transparent 100%);
+}
+
+.auth-card::after {
+  content: '';
+  position: absolute;
+  top: -1px; left: -1px;
+  width: 44px; height: 44px;
+  border-top: 2px solid var(--lol-gold-2);
+  border-left: 2px solid var(--lol-gold-2);
+  border-radius: var(--r-lg) 0 0 0;
+  pointer-events: none;
+}
+
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(28px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* ── AUTH LOGO ── */
+.auth-logo {
+  text-align: center;
+  margin-bottom: 36px;
+  animation: fadeDown 0.5s var(--ease-out) 0.15s both;
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.logo-icon {
+  display: block;
+  font-size: 48px;
+  margin-bottom: 14px;
+  filter: drop-shadow(0 0 20px var(--glow-gold));
+  animation: iconPulse 4s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% { filter: drop-shadow(0 0 20px var(--glow-gold)); }
+  50%       { filter: drop-shadow(0 0 36px rgba(200,155,60,0.7)); }
+}
+
+.auth-logo h1 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg,
+    var(--lol-gold-light) 0%,
+    var(--lol-gold-1) 60%,
+    var(--lol-gold-3) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 6px;
+}
+
+.auth-logo p {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--lol-grey-1);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+/* ── FORM ── */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: fadeUp 0.5s var(--ease-out) 0.25s both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.input-group { display: flex; flex-direction: column; gap: 7px; }
+
+.input-group label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--lol-grey-1);
+  transition: color 0.2s;
+}
+
+.input-group:focus-within label { color: var(--lol-gold-1); }
+
+.input-group input,
+.input-group textarea {
+  background: rgba(1, 10, 19, 0.7);
+  border: 1px solid var(--lol-gold-3);
+  border-radius: var(--r-md);
+  padding: 13px 16px;
+  color: var(--lol-gold-light);
+  font-family: var(--font-body);
+  font-size: 15px;
+  transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+  outline: none;
+  width: 100%;
+}
+
+.input-group input:hover,
+.input-group textarea:hover {
+  border-color: var(--lol-gold-2);
+  background: rgba(1, 10, 19, 0.85);
+}
+
+.input-group input:focus,
+.input-group textarea:focus {
+  border-color: var(--lol-gold-1);
+  background: rgba(200, 170, 110, 0.04);
+  box-shadow:
+    0 0 0 3px rgba(200,170,110,0.1),
+    0 0 20px rgba(200,170,110,0.06);
+}
+
+.input-group input::placeholder,
+.input-group textarea::placeholder { color: var(--lol-grey-2); }
+
+/* ── LOL BUTTON ── */
+.btn-primary {
+  position: relative;
+  width: 100%;
+  margin-top: 6px;
+  padding: 14px 24px;
+  background: linear-gradient(180deg, #1a3a5c 0%, #0a1f35 100%);
+  border: 1px solid var(--lol-gold-2);
+  border-radius: var(--r-md);
+  color: var(--lol-gold-1);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.15s var(--ease-spring), box-shadow 0.25s, border-color 0.25s, color 0.2s;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(200,170,110,0.08) inset;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(200,170,110,0.18),
+    transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  border-color: var(--lol-gold-1);
+  color: var(--lol-gold-light);
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.7),
+    0 0 24px var(--glow-gold);
+}
+
+.btn-primary:hover::before { left: 140%; }
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+}
+
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── FEEDBACK ── */
+.error-box {
+  background: rgba(174, 42, 32, 0.1);
+  border: 1px solid rgba(174, 42, 32, 0.35);
+  border-radius: var(--r-md);
+  padding: 11px 16px;
+  color: #ff6b6b;
+  font-size: 13px;
+  text-align: center;
+  animation: shake 0.4s var(--ease-out);
+}
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-3px); }
+  80%      { transform: translateX(3px); }
+}
+
+.success-box {
+  background: rgba(11, 196, 127, 0.08);
+  border: 1px solid rgba(11, 196, 127, 0.25);
+  border-radius: var(--r-md);
+  padding: 16px 20px;
+  color: #3dffa0;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.info-box {
+  background: rgba(200, 155, 60, 0.08);
+  border: 1px solid rgba(200, 155, 60, 0.25);
+  border-radius: var(--r-md);
+  padding: 13px 16px;
+  color: var(--lol-gold-1);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ── LINKS ── */
+.auth-link {
+  text-align: center;
+  margin-top: 22px;
+  font-size: 13px;
+  color: var(--lol-grey-2);
+}
+
+.auth-link a {
+  color: var(--lol-gold-1);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.auth-link a:hover { color: var(--lol-gold-light); }
+
+.link-subtle {
+  color: var(--lol-grey-2);
+  font-size: 13px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.link-subtle:hover { color: var(--lol-gold-1); }
+
+/* ── SPINNER ── */
+.spinner {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid rgba(200,170,110,0.2);
+  border-top-color: var(--lol-gold-1);
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  vertical-align: middle;
+}
+
+.spinner.large {
+  width: 44px; height: 44px;
+  border-color: rgba(200,170,110,0.12);
+  border-top-color: var(--lol-gold-2);
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════
+   QR CODE
+═══════════════════════════════════════════ */
+.qr-card { max-width: 480px; }
+
+.qr-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 28px;
+  padding: 20px;
+  background: rgba(1,10,19,0.6);
+  border: 1px solid var(--lol-gold-3);
+  border-radius: var(--r-md);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 14px;
+  color: var(--lol-grey-1);
+}
+
+.step-num {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, var(--lol-gold-3), var(--lol-gold-2));
+  border: 1px solid var(--lol-gold-1);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bg-void);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(200,155,60,0.3);
+}
+
+.step strong { color: var(--lol-gold-light); }
+
+.qr-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 24px 0;
+  padding: 20px;
+  background: white;
+  border-radius: var(--r-md);
+  border: 2px solid var(--lol-gold-2);
+  box-shadow: 0 0 30px rgba(200,155,60,0.25);
+}
+
+.qr-image { width: 200px; height: 200px; display: block; }
+
+.qr-hint {
+  text-align: center;
+  font-size: 13px;
+  color: var(--lol-grey-1);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════
+   OTP INPUTS
+═══════════════════════════════════════════ */
+.otp-hint {
+  text-align: center;
+  color: var(--lol-grey-1);
+  font-size: 14px;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.otp-hint strong { color: var(--lol-gold-light); }
+
+.otp-inputs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.otp-box {
+  width: 52px !important;
+  height: 60px;
+  text-align: center;
+  font-size: 26px !important;
+  font-family: var(--font-display) !important;
+  font-weight: 700;
+  background: rgba(1,10,19,0.8) !important;
+  border: 1px solid var(--lol-gold-3) !important;
+  border-radius: var(--r-md) !important;
+  color: var(--lol-gold-1) !important;
+  padding: 0 !important;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s var(--ease-spring);
+  caret-color: var(--lol-gold-1);
+}
+
+.otp-box:focus {
+  border-color: var(--lol-gold-1) !important;
+  transform: scale(1.08) translateY(-2px);
+  box-shadow:
+    0 0 0 2px rgba(200,155,60,0.15),
+    0 0 16px rgba(200,155,60,0.2) !important;
+  background: rgba(200,155,60,0.05) !important;
+}
+
+.otp-box.otp-error {
+  border-color: var(--lol-red) !important;
+  animation: shake 0.4s var(--ease-out);
+}
+
+/* ═══════════════════════════════════════════
+   CHOOSE OTP METHOD
+═══════════════════════════════════════════ */
+.otp-method-choices { display: flex; flex-direction: column; gap: 12px; }
+
+.otp-method-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(1,10,19,0.6);
+  border: 1px solid var(--lol-gold-3);
+  border-radius: var(--r-md);
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.otp-method-card:hover {
+  border-color: var(--lol-gold-2);
+  background: rgba(200,155,60,0.05);
+  transform: translateX(4px);
+}
+
+.otp-method-card.selected {
+  border-color: var(--lol-gold-1);
+  background: rgba(200,155,60,0.08);
+  box-shadow: 0 0 20px rgba(200,155,60,0.08);
+}
+
+.method-icon { font-size: 28px; flex-shrink: 0; }
+
+.method-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--lol-gold-light);
+  margin-bottom: 3px;
+}
+
+.method-desc { font-size: 12px; color: var(--lol-grey-1); }
+
+.method-radio {
+  width: 20px; height: 20px;
+  border: 2px solid var(--lol-gold-3);
+  border-radius: 50%;
+  margin-left: auto;
+  flex-shrink: 0;
+  position: relative;
+  transition: all 0.2s var(--ease-spring);
+}
+
+.method-radio::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: var(--lol-gold-1);
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 0.2s var(--ease-spring);
+}
+
+.method-radio.active { border-color: var(--lol-gold-1); }
+.method-radio.active::after { transform: scale(1); }
+
+/* ═══════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════ */
+.dashboard {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+.dash-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(1, 10, 19, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--lol-gold-3);
+  padding: 0 32px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.6), 0 1px 0 rgba(200,170,110,0.15);
+}
+
+.dash-logo {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, var(--lol-gold-light), var(--lol-gold-1));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dash-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--lol-grey-1);
+}
+
+.dash-avatar {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--lol-gold-3), var(--lol-gold-2));
+  border: 2px solid var(--lol-gold-1);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bg-void);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 0 0 12px rgba(200,155,60,0.3);
+}
+
+.btn-logout {
+  background: transparent;
+  border: 1px solid var(--lol-gold-3);
+  color: var(--lol-grey-1);
+  border-radius: var(--r-sm);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover { border-color: var(--lol-red); color: #ff6b6b; }
+
+.dash-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  animation: fadeUp 0.5s var(--ease-out) both;
+}
+
+/* ── WELCOME CARD ── */
+.welcome-card {
+  position: relative;
+  background: rgba(1,10,19,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--lol-gold-3);
+  border-radius: var(--r-lg);
+  padding: 32px 36px;
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+
+.welcome-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg,
+    transparent, var(--lol-gold-2), transparent);
+}
+
+.welcome-card::after {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle,
+    rgba(11,196,227,0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.welcome-card h2 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--lol-gold-light);
+}
+
+.welcome-card h2 span {
+  background: linear-gradient(135deg,
+    var(--lol-gold-1), var(--lol-gold-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.welcome-card p { color: var(--lol-grey-1); font-size: 14px; }
+
+/* ── STATS GRID ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  position: relative;
+  background: rgba(1,10,19,0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--lol-gold-3);
+  border-radius: var(--r-md);
+  padding: 24px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.2s var(--ease-spring);
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg,
+    transparent, var(--lol-gold-3), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.stat-card:hover {
+  border-color: var(--lol-gold-2);
+  transform: translateY(-4px);
+  box-shadow:
+    0 16px 40px rgba(0,0,0,0.6),
+    0 0 20px rgba(200,155,60,0.08);
+}
+
+.stat-card:hover::before { opacity: 1; }
+
+.stat-icon {
+  font-size: 30px;
+  filter: drop-shadow(0 0 8px rgba(200,155,60,0.3));
+}
+
+.stat-label {
+  font-size: 9px;
+  color: var(--lol-grey-1);
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--lol-gold-light);
+  line-height: 1;
+}
+
+/* ── COMING SOON ── */
+.coming-soon {
+  background: rgba(1,10,19,0.85);
+  border: 1px solid var(--lol-gold-3);
+  border-radius: var(--r-md);
+  padding: 28px;
+}
+
+.coming-soon h3 {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--lol-grey-1);
+  margin-bottom: 16px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.modules-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.module-pill {
+  background: rgba(1,10,19,0.7);
+  border: 1px solid var(--lol-gold-3);
+  border-radius: 4px;
+  padding: 8px 18px;
+  font-size: 11px;
+  color: var(--lol-grey-1);
+  font-family: var(--font-display);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  cursor: default;
+}
+
+.module-pill:hover {
+  border-color: var(--lol-gold-1);
+  color: var(--lol-gold-1);
+  background: rgba(200,155,60,0.06);
+  box-shadow: 0 0 12px rgba(200,155,60,0.08);
+}
+
+/* ═══════════════════════════════════════════
+   ADMIN NAV
+═══════════════════════════════════════════ */
+.admin-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.admin-nav-card {
+  background: rgba(1,10,19,0.85);
+  border: 1px solid var(--lol-gold-3);
+  border-radius: var(--r-md);
+  padding: 32px 28px;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s var(--ease-out);
+}
+
+.admin-nav-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg,
+    transparent, var(--lol-gold-2), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.admin-nav-card:hover {
+  border-color: var(--lol-gold-1);
+  transform: translateY(-4px);
+  box-shadow:
+    0 16px 40px rgba(0,0,0,0.7),
+    0 0 24px rgba(200,155,60,0.1);
+}
+
+.admin-nav-card:hover::before { opacity: 1; }
+.admin-nav-card span { font-size: 36px; }
+
+.admin-nav-card h3 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--lol-gold-light);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.admin-nav-card p {
+  font-size: 13px;
+  color: var(--lol-grey-1);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════ */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-void); }
+::-webkit-scrollbar-thumb { background: var(--lol-gold-3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--lol-gold-2); }
+::selection { background: rgba(200,170,110,0.2); color: var(--lol-gold-light); }
+
+/* ═══════════════════════════════════════════
+   APP LAYOUT (sidebar + main)
+═══════════════════════════════════════════ */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: rgba(1,10,19,0.95);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border-gold);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  transition: width 0.25s var(--ease-out);
+}
+
+.sidebar.collapsed { width: 64px; }
+
+.sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 16px;
+  border-bottom: 1px solid var(--border-gold);
+  min-height: 64px;
+  gap: 8px;
+}
+
+.sidebar-logo {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, var(--lol-gold-light), var(--lol-gold-1));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.collapse-btn {
+  background: transparent;
+  border: 1px solid var(--lol-gold-3);
+  color: var(--lol-gold-2);
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.collapse-btn:hover { border-color: var(--lol-gold-1); color: var(--lol-gold-light); }
+
+.sidebar-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 8px;
+  overflow-y: auto;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  color: var(--lol-grey-1);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.18s;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.nav-item:hover {
+  background: rgba(200,155,60,0.06);
+  color: var(--lol-gold-1);
+  border-color: var(--border-gold);
+}
+
+.nav-item.active {
+  background: rgba(200,155,60,0.1);
+  color: var(--lol-gold-1);
+  border-color: var(--lol-gold-3);
+  box-shadow: 0 0 12px rgba(200,155,60,0.08);
+}
+
+.nav-icon { font-size: 18px; flex-shrink: 0; }
+.nav-label { flex: 1; }
+
+.sidebar-footer {
+  padding: 12px 8px;
+  border-top: 1px solid var(--border-gold);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: rgba(200,155,60,0.05);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-gold);
+  overflow: hidden;
+}
+
+.sidebar-user-info { min-width: 0; flex: 1; overflow: hidden; }
+
+.sidebar-username {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lol-gold-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-email {
+  font-size: 10px;
+  color: var(--lol-grey-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── MAIN CONTENT ── */
+.app-main {
+  flex: 1;
+  min-width: 0;
+  padding: 36px 40px;
+  animation: fadeUp 0.4s var(--ease-out) both;
+  overflow-x: hidden;
+}
+
+/* ── PAGE HEADER ── */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, var(--lol-gold-light), var(--lol-gold-1));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── FILTER BAR ── */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding: 14px 18px;
+  background: rgba(1,10,19,0.7);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-md);
+}
+
+.filter-select {
+  background: rgba(1,10,19,0.8);
+  border: 1px solid var(--lol-gold-3);
+  color: var(--lol-gold-light);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.filter-select:focus { border-color: var(--lol-gold-1); }
+
+.filter-btn {
+  background: rgba(1,10,19,0.8);
+  border: 1px solid var(--lol-gold-3);
+  color: var(--lol-grey-1);
+  border-radius: var(--r-sm);
+  padding: 8px 16px;
+  font-size: 12px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.18s;
+}
+.filter-btn:hover, .filter-btn.active {
+  border-color: var(--lol-gold-1);
+  color: var(--lol-gold-1);
+  background: rgba(200,155,60,0.06);
+}
+
+/* ── CARDS GRID ── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: rgba(1,10,19,0.85);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-md);
+  padding: 22px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.22s var(--ease-spring);
+  cursor: pointer;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--lol-gold-2), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.card:hover {
+  border-color: var(--lol-gold-2);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.6), 0 0 20px rgba(200,155,60,0.07);
+}
+.card:hover::before { opacity: 1; }
+
+/* ── PLAYER CARD ── */
+.player-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.player-avatar {
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, var(--lol-gold-3), var(--lol-blue-3));
+  border: 1px solid var(--lol-gold-2);
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--lol-gold-light);
+  flex-shrink: 0;
+}
+
+.player-name { font-size: 16px; font-weight: 600; color: var(--lol-gold-light); }
+.player-team { font-size: 12px; color: var(--lol-grey-1); margin-top: 2px; }
+
+.badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 3px 8px;
+  border: 1px solid;
+}
+
+.badge-region {
+  border-color: var(--lol-blue-2);
+  color: var(--lol-blue-1);
+  background: rgba(11,196,227,0.08);
+}
+
+.badge-role {
+  border-color: var(--lol-gold-3);
+  color: var(--lol-gold-1);
+  background: rgba(200,155,60,0.08);
+}
+
+.badge-status-scheduled { border-color: var(--lol-grey-2); color: var(--lol-grey-1); background: transparent; }
+.badge-status-live      { border-color: #f97316; color: #f97316; background: rgba(249,115,22,0.08); }
+.badge-status-finished  { border-color: var(--lol-green); color: var(--lol-green); background: rgba(11,196,127,0.08); }
+
+.price-tag {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--lol-gold-1);
+}
+.price-tag span { font-size: 12px; color: var(--lol-grey-1); font-family: var(--font-body); }
+
+/* ── BUTTON VARIANTS ── */
+.btn-gold {
+  background: linear-gradient(180deg, var(--lol-gold-3), var(--lol-gold-4));
+  border: 1px solid var(--lol-gold-2);
+  color: var(--lol-gold-light);
+  border-radius: var(--r-sm);
+  padding: 9px 18px;
+  font-size: 12px;
+  font-family: var(--font-display);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-gold:hover { border-color: var(--lol-gold-1); background: linear-gradient(180deg,#2a5080,#1a3050); color: var(--lol-gold-light); box-shadow: 0 0 16px rgba(200,155,60,0.2); }
+
+.btn-blue {
+  background: linear-gradient(180deg, #1a3a5c, #0a1f35);
+  border: 1px solid var(--lol-blue-2);
+  color: var(--lol-blue-1);
+  border-radius: var(--r-sm);
+  padding: 9px 18px;
+  font-size: 12px;
+  font-family: var(--font-display);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-blue:hover { border-color: var(--lol-blue-1); box-shadow: 0 0 16px rgba(11,196,227,0.2); }
+
+.btn-danger {
+  background: transparent;
+  border: 1px solid rgba(174,42,32,0.5);
+  color: #ff6b6b;
+  border-radius: var(--r-sm);
+  padding: 7px 14px;
+  font-size: 11px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-danger:hover { border-color: var(--lol-red); background: rgba(174,42,32,0.1); }
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 11px;
+}
+
+/* ── TABLE ── */
+.lol-table { width: 100%; border-collapse: collapse; }
+
+.lol-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--lol-grey-1);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-gold);
+}
+
+.lol-table td {
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--lol-gold-light);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: middle;
+}
+
+.lol-table tr:hover td { background: rgba(200,155,60,0.03); }
+
+.table-wrap {
+  background: rgba(1,10,19,0.85);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+/* ── TABS ── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border-gold);
+  padding-bottom: 0;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--lol-grey-1);
+  font-size: 13px;
+  font-family: var(--font-display);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.18s;
+  margin-bottom: -1px;
+}
+.tab:hover { color: var(--lol-gold-1); }
+.tab.active { color: var(--lol-gold-1); border-bottom-color: var(--lol-gold-1); }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease both;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-lg);
+  padding: 36px;
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  animation: cardReveal 0.25s var(--ease-out) both;
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--lol-gold-light);
+  margin-bottom: 24px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  background: transparent;
+  border: 1px solid var(--lol-gold-3);
+  color: var(--lol-grey-1);
+  border-radius: 4px;
+  width: 28px; height: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.modal-close:hover { border-color: var(--lol-red); color: #ff6b6b; }
+
+.modal-form { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── ROSTER SLOTS ── */
+.roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.roster-slot {
+  background: rgba(1,10,19,0.85);
+  border: 1px dashed var(--lol-gold-3);
+  border-radius: var(--r-md);
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.roster-slot.filled {
+  border-style: solid;
+  border-color: var(--lol-gold-3);
+  cursor: default;
+}
+
+.roster-slot.filled:hover { border-color: var(--lol-gold-2); background: rgba(200,155,60,0.04); }
+.roster-slot:not(.filled):hover { border-color: var(--lol-gold-1); background: rgba(200,155,60,0.04); }
+
+.slot-position {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--lol-grey-1);
+  font-family: var(--font-display);
+}
+
+.slot-icon { font-size: 24px; }
+
+.slot-player-name { font-size: 14px; font-weight: 600; color: var(--lol-gold-light); }
+.slot-player-team { font-size: 11px; color: var(--lol-grey-1); }
+.slot-captain-badge {
+  font-size: 10px;
+  background: rgba(200,155,60,0.2);
+  border: 1px solid var(--lol-gold-2);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--lol-gold-1);
+  letter-spacing: 1px;
+}
+
+/* ── BUDGET BAR ── */
+.budget-bar-wrap {
+  background: rgba(1,10,19,0.85);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-md);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.budget-info { flex: 1; }
+.budget-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--lol-grey-1); margin-bottom: 8px; }
+.budget-track { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.budget-fill  { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--lol-green), var(--lol-gold-2)); transition: width 0.4s var(--ease-out); }
+.budget-fill.danger { background: linear-gradient(90deg, var(--lol-red), #ff6b6b); }
+
+.budget-values { font-family: var(--font-display); }
+.budget-used  { font-size: 28px; color: var(--lol-gold-1); font-weight: 700; }
+.budget-total { font-size: 14px; color: var(--lol-grey-1); }
+
+/* ── MATCH CARD ── */
+.match-card {
+  background: rgba(1,10,19,0.85);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-md);
+  padding: 20px 24px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.match-card:hover { border-color: var(--lol-gold-2); background: rgba(200,155,60,0.03); }
+
+.match-teams {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 200px;
+}
+
+.team-name { font-family: var(--font-display); font-size: 18px; color: var(--lol-gold-light); font-weight: 700; }
+.vs-text { color: var(--lol-grey-2); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+
+.match-score {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--lol-gold-1);
+  min-width: 60px;
+  text-align: center;
+}
+
+.match-meta { font-size: 12px; color: var(--lol-grey-1); display: flex; flex-direction: column; gap: 4px; text-align: right; }
+
+/* ── PLAYER STATS TABLE ── */
+.stats-expand {
+  background: rgba(1,10,19,0.7);
+  border-top: 1px solid var(--border-gold);
+  padding: 16px 24px;
+  animation: fadeUp 0.3s var(--ease-out) both;
+}
+
+/* ── RANKING ── */
+.rank-row { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.rank-num { font-family: var(--font-display); font-size: 18px; color: var(--lol-grey-2); width: 30px; text-align: center; }
+.rank-num.gold { color: #ffd700; }
+.rank-num.silver { color: #c0c0c0; }
+.rank-num.bronze { color: #cd7f32; }
+.rank-username { flex: 1; font-size: 14px; color: var(--lol-gold-light); font-weight: 500; }
+.rank-points { font-family: var(--font-display); font-size: 18px; color: var(--lol-gold-1); }
+
+/* ── CHATBOT ── */
+.chatbot-wrap {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 100px);
+  max-height: 700px;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: rgba(1,10,19,0.7);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-md) var(--r-md) 0 0;
+}
+
+.chat-bubble {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.chat-bubble.user {
+  align-self: flex-end;
+  background: rgba(200,155,60,0.15);
+  border: 1px solid var(--lol-gold-3);
+  color: var(--lol-gold-light);
+}
+
+.chat-bubble.bot {
+  align-self: flex-start;
+  background: rgba(11,196,227,0.07);
+  border: 1px solid rgba(11,196,227,0.2);
+  color: var(--lol-gold-light);
+}
+
+.chat-bubble.bot::before { content: '🤖 '; }
+
+.chat-input-row {
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+  background: rgba(1,10,19,0.9);
+  border: 1px solid var(--border-gold);
+  border-top: none;
+  border-radius: 0 0 var(--r-md) var(--r-md);
+}
+
+.chat-input {
+  flex: 1;
+  background: rgba(1,10,19,0.8);
+  border: 1px solid var(--lol-gold-3);
+  border-radius: var(--r-sm);
+  color: var(--lol-gold-light);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.chat-input:focus { border-color: var(--lol-gold-1); }
+
+.chat-suggestions { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px 0; }
+.chat-suggestion {
+  background: rgba(1,10,19,0.6);
+  border: 1px solid var(--lol-gold-3);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--lol-grey-1);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.chat-suggestion:hover { border-color: var(--lol-gold-1); color: var(--lol-gold-1); }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--lol-grey-1);
+}
+.empty-state .empty-icon { font-size: 48px; display: block; margin-bottom: 16px; }
+.empty-state p { font-size: 14px; }
+
+/* ── LOADING ── */
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+/* ── SECTION CARD ── */
+.section-card {
+  background: rgba(1,10,19,0.85);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-md);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--lol-grey-1);
+  margin-bottom: 18px;
+}
+
+/* ── TRANSFER BADGE ── */
+.transfer-buy  { color: var(--lol-green); font-weight: 600; }
+.transfer-sell { color: #f97316; font-weight: 600; }
+
+/* ── FOLLOW BUTTON ── */
+.btn-follow {
+  background: transparent;
+  border: 1px solid var(--lol-blue-2);
+  color: var(--lol-blue-1);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-follow:hover { background: rgba(11,196,227,0.08); }
+.btn-follow.following { border-color: var(--lol-grey-2); color: var(--lol-grey-1); }
+.btn-follow.following:hover { border-color: var(--lol-red); color: #ff6b6b; }
