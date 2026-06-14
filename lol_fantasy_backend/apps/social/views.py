@@ -116,23 +116,49 @@ class SocialRankingView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from django.db.models import Sum, Count
+        from django.db.models import Sum, Count, Value, FloatField
+        from django.db.models.functions import Coalesce
         from apps.users.models import Utilisateur
 
-        users = Utilisateur.objects.filter(is_staff=False).annotate(
-            total_points=Sum('fantasy_scores__points'),
-            pronostics_ok=Count('pronostics', filter=Q(pronostics__is_correct=True)),
-        ).order_by('-total_points')[:100]
+        # Calculs séparés pour éviter le "fan out" bug (Sum × Count = valeurs multipliées)
+        from apps.scores.models import FantasyScore
+
+        # Points fantasy (K/D/A/CS...)
+        pts_map = {}
+        for fs in FantasyScore.objects.values('user_id').annotate(total=Sum('points')):
+            pts_map[fs['user_id']] = round(fs['total'] or 0, 2)
+
+        # Points pronostics corrects (+5 par pronostic correct)
+        prono_pts_map = {}
+        prono_ok_map  = {}
+        for p in Pronostic.objects.filter(is_correct=True).values('user_id').annotate(
+            n=Count('id'), bonus=Sum('points_earned')
+        ):
+            prono_ok_map[p['user_id']]  = p['n']
+            prono_pts_map[p['user_id']] = round(p['bonus'] or 0, 2)
+
+        users = Utilisateur.objects.all().order_by('username')
+
+        rows = []
+        for u in users:
+            fantasy_pts = pts_map.get(u.id, 0.0)
+            prono_pts   = prono_pts_map.get(u.id, 0.0)
+            total       = round(fantasy_pts + prono_pts, 2)
+            rows.append({
+                'user_id'       : u.id,
+                'username'      : u.username,
+                'total_points'  : total,
+                'fantasy_points': fantasy_pts,
+                'prono_points'  : prono_pts,
+                'pronostics_ok' : prono_ok_map.get(u.id, 0),
+                'role'          : u.role,
+            })
+
+        rows.sort(key=lambda r: (-r['total_points'], r['username']))
 
         data = []
-        for idx, u in enumerate(users):
-            is_followed = Follow.objects.filter(follower=request.user, following=u).exists()
-            data.append({
-                'rank':          idx + 1,
-                'user_id':       u.id,
-                'username':      u.username,
-                'total_points':  u.total_points or 0,
-                'pronostics_ok': u.pronostics_ok,
-                'is_followed':   is_followed,
-            })
+        for rank, row in enumerate(rows, 1):
+            is_followed = Follow.objects.filter(follower=request.user, following_id=row['user_id']).exists()
+            data.append({**row, 'rank': rank, 'is_followed': is_followed})
+
         return Response(data)

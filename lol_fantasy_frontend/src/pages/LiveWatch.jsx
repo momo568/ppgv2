@@ -191,6 +191,7 @@ export default function LiveWatch() {
   const [recentMatches, setRecent]      = useState([]);
   const [selectedEvent, setSelEvent]    = useState(null);
   const [selectedStream, setSelStream]  = useState(null);
+  const [selectedGroupIdx, setGroupIdx] = useState(0);
   const [countdown, setCountdown]       = useState(REFRESH_SECS);
   const [loading, setLoading]           = useState(true);
   const [lastRefresh, setLast]          = useState(null);
@@ -235,7 +236,12 @@ export default function LiveWatch() {
       <div className="page-header">
         <h1 className="page-title">
           {hasLive
-            ? <><span style={{ color: '#f97316', marginRight: 8 }}>●</span> Match en direct</>
+            ? <>
+                <span style={{ color: '#f97316', marginRight: 8 }}>●</span>
+                {liveEvents.length > 1
+                  ? <>{liveEvents.length} matchs en direct</>
+                  : <>Match en direct</>}
+              </>
             : '📺 Regarder'}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -264,45 +270,193 @@ export default function LiveWatch() {
         <>
           {/* ── SI MATCH EN DIRECT ── */}
           {hasLive ? (
-            <>
-              {/* Sélecteur si plusieurs events */}
-              {liveEvents.length > 1 && (
-                <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-                  {liveEvents.map((ev, i) => (
-                    <button key={i} onClick={() => { setSelEvent(ev); const s = ev.streams?.[0]; setSelStream(s || null); }}
-                      style={{
-                        background: selectedEvent === ev ? 'rgba(249,115,22,0.15)' : 'rgba(1,10,19,0.8)',
-                        border: `1px solid ${selectedEvent === ev ? 'rgba(249,115,22,0.6)' : 'var(--border-gold)'}`,
-                        borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontSize: 13,
-                        color: selectedEvent === ev ? '#f97316' : 'var(--lol-grey-1)',
-                      }}>
-                      🔴 {ev.league} {ev.team1 ? `${ev.team1.code} vs ${ev.team2?.code}` : ''}
-                    </button>
-                  ))}
-                </div>
-              )}
+            (() => {
+              // Regrouper les matchs par stream unique
+              // Cle = liste des params de stream tries (identique = meme broadcast)
+              const getKey = ev => (ev.streams||[]).map(s=>s.param).sort().join('|') || `solo-${ev.id}`;
+              const groupMap = {};
+              liveEvents.forEach(ev => {
+                const k = getKey(ev);
+                if (!groupMap[k]) groupMap[k] = { streams: ev.streams||[], events: [] };
+                groupMap[k].events.push(ev);
+              });
+              const groups = Object.values(groupMap);
 
-              {selectedEvent && (
+              // Index du groupe selectionne (clamp au nb de groupes)
+              const activeIdx = Math.min(selectedGroupIdx, groups.length - 1);
+              const activeGroup = groups[activeIdx];
+
+              return (
                 <>
-                  <Scoreboard ev={selectedEvent} onStreamChange={handleStreamChange} selectedStream={selectedStream} />
-
-                  {/* STREAM VIDÉO */}
-                  {selectedStream ? (
-                    <div style={{ marginBottom: 20, borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border-gold)', boxShadow: '0 0 40px rgba(0,0,0,0.8)' }}>
-                      {selectedStream.provider === 'twitch'
-                        ? <TwitchPlayer channel={selectedStream.param} />
-                        : <YouTubePlayer videoId={selectedStream.param} />
-                      }
-                    </div>
-                  ) : (
-                    <div style={{ background: 'rgba(1,10,19,0.9)', border: '1px solid var(--border-gold)', borderRadius: 14, padding: 40, textAlign: 'center', marginBottom: 20 }}>
-                      <div style={{ fontSize: 48, marginBottom: 12 }}>📺</div>
-                      <div style={{ fontSize: 14, color: 'var(--lol-grey-1)' }}>Aucun stream disponible pour ce match.</div>
+                  {/* ── Sélecteur de groupe si plusieurs streams différents ── */}
+                  {groups.length > 1 && (
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+                      {groups.map((grp, gi) => {
+                        const isSel = gi === activeIdx;
+                        const ev0   = grp.events[0] || {};
+                        const t1    = (ev0.team1 || {});
+                        const t2    = (ev0.team2 || {});
+                        const hasTeams = t1.code && t2.code;
+                        const label = grp.events.length > 1
+                          ? `${grp.events.length} matchs · ${ev0.league || ''}`
+                          : hasTeams
+                            ? `${t1.code} vs ${t2.code}`
+                            : ev0.league || `Match ${gi + 1}`;
+                        const hasStream = grp.streams.length > 0;
+                        return (
+                          <button key={gi} onClick={() => { setGroupIdx(gi); setSelStream(null); }}
+                            style={{
+                              background: isSel ? 'rgba(249,115,22,0.18)' : 'rgba(1,10,19,0.85)',
+                              border: `1.5px solid ${isSel ? '#f97316' : 'rgba(249,115,22,0.3)'}`,
+                              borderRadius: 10, padding: '10px 20px', cursor: 'pointer',
+                              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3,
+                              minWidth: 150, transition: 'all 0.18s',
+                              boxShadow: isSel ? '0 0 18px rgba(249,115,22,0.3)' : 'none',
+                            }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ width: 7, height: 7, background: '#f97316', borderRadius: '50%', display:'inline-block', animation:'pulse-dot 1.5s infinite' }} />
+                              <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: isSel ? '#f97316' : 'var(--lol-gold-light)' }}>
+                                {label}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: 10, color: 'var(--lol-grey-1)', paddingLeft: 13 }}>
+                              {ev0.league}{ev0.strategy > 1 ? ` · BO${ev0.strategy}` : ''}
+                              {hasStream ? ' · ▶ stream' : ' · 📊 score'}
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
+
+                  {/* ── Afficher SEULEMENT le groupe sélectionné ── */}
+                  {(() => {
+                    const { events, streams } = activeGroup;
+                    const cols = events.length === 1 ? '1fr'
+                               : events.length === 2 ? '1fr 1fr'
+                               : 'repeat(3, 1fr)';
+                    const isMulti   = events.length > 1;
+                    const defStream = streams.find(s => s.locale === 'fr-FR') || streams[0] || null;
+                    const groupStream = selectedStream && streams.some(s => s.param === selectedStream.param)
+                      ? selectedStream : defStream;
+                    const gi = activeIdx;
+
+                    return (
+                      <div key={gi} style={{ marginBottom: 28 }}>
+
+                        {/* Bandeau si plusieurs matchs dans ce groupe */}
+                        {isMulti && (
+                          <div style={{
+                            display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12,
+                            background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.25)',
+                            borderRadius: 10, padding: '8px 14px',
+                          }}>
+                            <span style={{ width: 7, height: 7, background: '#f97316', borderRadius: '50%', display:'inline-block', animation:'pulse-dot 1.5s infinite' }} />
+                            <span style={{ fontSize: 12, fontWeight: 700, color: '#f97316' }}>
+                              {events.length} matchs — broadcast partagé
+                            </span>
+                            <span style={{ fontSize: 10, color: 'var(--lol-grey-2)', marginLeft: 'auto' }}>
+                              Le stream alterne entre ces matchs
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Scoreboards : 1, 2 ou 3 côte à côte */}
+                        <div style={{ display: 'grid', gridTemplateColumns: cols, gap: 10, marginBottom: 12 }}>
+                          {events.map((ev, ei) => {
+                            const t1 = ev.team1 || {};
+                            const t2 = ev.team2 || {};
+                            const w1 = t1.wins ?? 0;
+                            const w2 = t2.wins ?? 0;
+                            return (
+                              <div key={ei} style={{
+                                background: 'rgba(1,10,19,0.95)',
+                                border: '1px solid rgba(249,115,22,0.4)',
+                                borderRadius: 12, padding: '14px 18px',
+                                position: 'relative', overflow: 'hidden',
+                              }}>
+                                <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:'linear-gradient(90deg,transparent,#f97316,transparent)' }} />
+                                {/* Header */}
+                                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 12 }}>
+                                  <span style={{ fontSize:10, color:'var(--lol-grey-1)', fontWeight:700, letterSpacing:1 }}>
+                                    {ev.league}
+                                  </span>
+                                  <span style={{ display:'inline-flex', alignItems:'center', gap:4, background:'rgba(249,115,22,0.15)', border:'1px solid rgba(249,115,22,0.4)', borderRadius:12, padding:'2px 8px', fontSize:10, fontWeight:700, color:'#f97316' }}>
+                                    <span style={{ width:5, height:5, background:'#f97316', borderRadius:'50%', display:'inline-block', animation:'pulse-dot 1.5s infinite' }} />
+                                    LIVE {ev.strategy > 1 ? `BO${ev.strategy}` : ''}
+                                  </span>
+                                </div>
+                                {/* Score */}
+                                {t1.code && t2.code ? (
+                                  <div style={{ display:'flex', alignItems:'center', gap:8, justifyContent:'space-between' }}>
+                                    <div style={{ textAlign:'center', flex:1 }}>
+                                      <TeamImg src={t1.image} code={t1.code} size={events.length === 1 ? 64 : 40} />
+                                      <div style={{ fontFamily:'var(--font-display)', fontSize: events.length===1 ? 20 : 15, fontWeight:800, color:'var(--lol-gold-light)', marginTop:6 }}>{t1.code}</div>
+                                    </div>
+                                    <div style={{ textAlign:'center' }}>
+                                      <div style={{ fontFamily:'var(--font-display)', fontSize: events.length===1 ? 52 : 34, fontWeight:900, color:'var(--lol-gold-1)', letterSpacing:4, lineHeight:1 }}>
+                                        {w1}<span style={{ color:'rgba(255,255,255,0.15)', fontSize:'60%' }}> – </span>{w2}
+                                      </div>
+                                      <div style={{ fontSize:8, color:'var(--lol-grey-2)', letterSpacing:2, marginTop:4 }}>VICTOIRES</div>
+                                    </div>
+                                    <div style={{ textAlign:'center', flex:1 }}>
+                                      <TeamImg src={t2.image} code={t2.code} size={events.length === 1 ? 64 : 40} />
+                                      <div style={{ fontFamily:'var(--font-display)', fontSize: events.length===1 ? 20 : 15, fontWeight:800, color:'var(--lol-gold-light)', marginTop:6 }}>{t2.code}</div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div style={{ textAlign:'center', padding:'12px 0' }}>
+                                    <div style={{ fontSize:28, marginBottom:4 }}>🎙️</div>
+                                    <div style={{ fontSize:11, color:'var(--lol-grey-1)' }}>Pre-show en cours</div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Stream — 1 par groupe (ou "pas de stream") */}
+                        {streams.length > 0 ? (
+                          <div>
+                            {/* Sélecteur de langue */}
+                            {streams.length > 1 && (
+                              <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:8 }}>
+                                {streams.map((s, si) => {
+                                  const label = LOCALE_LABELS[s.locale] || s.locale;
+                                  const icon  = s.provider === 'twitch' ? '💜' : '🔴';
+                                  const isSel = groupStream?.param === s.param;
+                                  return (
+                                    <button key={si} onClick={() => setSelStream(s)} style={{
+                                      background: isSel ? 'rgba(200,155,60,0.15)' : 'rgba(1,10,19,0.8)',
+                                      border: `1px solid ${isSel ? 'var(--lol-gold-1)' : 'var(--border-gold)'}`,
+                                      borderRadius: 20, padding:'5px 12px', cursor:'pointer',
+                                      fontSize:11, color: isSel ? 'var(--lol-gold-1)' : 'var(--lol-grey-1)',
+                                      transition:'all 0.15s',
+                                    }}>{icon} {label}</button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            <div style={{ borderRadius:14, overflow:'hidden', border:'1px solid var(--border-gold)', boxShadow:'0 0 40px rgba(0,0,0,0.8)' }}>
+                              {groupStream?.provider === 'twitch'
+                                ? <TwitchPlayer channel={groupStream.param} />
+                                : groupStream?.provider === 'youtube'
+                                  ? <YouTubePlayer videoId={groupStream.param} />
+                                  : null}
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ background:'rgba(1,10,19,0.85)', border:'1px solid var(--border-gold)', borderRadius:12, padding:'24px', textAlign:'center' }}>
+                            <div style={{ fontSize:36, marginBottom:8 }}>📊</div>
+                            <div style={{ fontSize:13, color:'var(--lol-grey-1)' }}>Scores en direct — pas de stream disponible</div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </>
-              )}
-            </>
+              );
+            })()
           ) : (
             /* ── PAS DE MATCH LIVE ── */
             <div style={{
@@ -314,7 +468,7 @@ export default function LiveWatch() {
                 AUCUN MATCH EN DIRECT
               </div>
               <div style={{ fontSize: 13, color: 'var(--lol-grey-1)', maxWidth: 420, margin: '0 auto', lineHeight: 1.7 }}>
-                Les compétitions LEC, LCK, LCS et LPL ont généralement lieu le week-end et en soirée.
+                Les compétitions LEC, LCK, LCS, LPL et EMEA Masters ont lieu en semaine et le week-end.
                 Le stream s'affichera automatiquement dès qu'un match commence.
               </div>
               <div style={{ marginTop: 20, fontSize: 12, color: 'var(--lol-grey-2)' }}>

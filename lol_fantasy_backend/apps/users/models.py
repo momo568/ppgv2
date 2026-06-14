@@ -20,18 +20,24 @@ class UtilisateurManager(BaseUserManager):
 
 
 class Utilisateur(AbstractUser):
+    ROLE_CHOICES = [
+        ('joueur',   'Joueur'),
+        ('manager',  'Manager'),
+        ('admin',    'Administrateur'),
+    ]
     OTP_METHOD_CHOICES = [
         ('qrcode', 'QR Code'),
         ('email',  'Email'),
     ]
 
+    role                = models.CharField(max_length=10, choices=ROLE_CHOICES, default='joueur')
     bio                 = models.TextField(blank=True, default='')
     points              = models.BigIntegerField(default=0)
     niveau              = models.IntegerField(default=1)
     otp_secret          = models.CharField(max_length=64, blank=True, default='')
     is_2fa_enabled      = models.BooleanField(default=True)
     otp_method          = models.CharField(max_length=10, choices=OTP_METHOD_CHOICES, default='qrcode')
-    must_change_password = models.BooleanField(default=False)  # True après création par admin
+    must_change_password = models.BooleanField(default=False)
     email_otp_code      = models.CharField(max_length=6, blank=True, default='')
     email_otp_expires   = models.DateTimeField(null=True, blank=True)
 

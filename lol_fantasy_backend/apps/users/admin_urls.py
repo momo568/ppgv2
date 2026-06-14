@@ -10,6 +10,7 @@ from .admin_views import (
     AdminPromouvoirView,
     AdminRetirerAdminView,
 )
+from .manager_views import PromoteToManagerView, DemoteManagerView
 
 urlpatterns = [
     # Stats
@@ -44,4 +45,12 @@ urlpatterns = [
     path('utilisateurs/<int:pk>/',
          AdminDeleteUserView.as_view(),
          name='admin-delete'),
+
+    # Gestion rôle Manager
+    path('utilisateurs/<int:pk>/set-manager/',
+         PromoteToManagerView.as_view(),
+         name='admin-set-manager'),
+    path('utilisateurs/<int:pk>/unset-manager/',
+         DemoteManagerView.as_view(),
+         name='admin-unset-manager'),
 ]

@@ -2,9 +2,12 @@ import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { matchService } from '../services/api';
 
-const LEAGUES = ['LEC', 'LCK', 'LCS', 'LPL'];
+const LEAGUES = ['LEC', 'LCK', 'LCS', 'LPL', 'EMEA Masters', 'VCS', 'LJL', 'PCS', 'CBLOL'];
 
-const LEAGUE_FLAGS = { LEC: '🇪🇺', LCK: '🇰🇷', LCS: '🇺🇸', LPL: '🇨🇳' };
+const LEAGUE_FLAGS = {
+  LEC: '🇪🇺', LCK: '🇰🇷', LCS: '🇺🇸', LPL: '🇨🇳',
+  'EMEA Masters': '🌍', VCS: '🇻🇳', LJL: '🇯🇵', PCS: '🌏', CBLOL: '🇧🇷',
+};
 
 function TeamLogo({ team }) {
   const [err, setErr] = useState(false);

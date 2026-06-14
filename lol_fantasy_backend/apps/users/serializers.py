@@ -63,12 +63,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model        = Utilisateur
         fields       = [
-            'id', 'email', 'username', 'bio',
-            'points', 'niveau', 'is_2fa_enabled',
+            'id', 'email', 'username', 'first_name', 'last_name', 'bio',
+            'role', 'points', 'niveau', 'is_2fa_enabled',
             'otp_method', 'must_change_password',
             'is_staff', 'is_superuser'
         ]
-        read_only_fields = ['id', 'email', 'points', 'niveau', 'is_staff', 'is_superuser']
+        read_only_fields = ['id', 'email', 'role', 'points', 'niveau', 'is_staff', 'is_superuser']
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only=True)

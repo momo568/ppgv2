@@ -4,12 +4,12 @@ import Layout from '../components/Layout';
 import { authService } from '../services/api';
 
 const MODULES = [
-  { to: '/players', icon: '⭐', label: 'Joueurs Pro',  desc: 'Consulte les stats des pros LEC, LCK, LCS, LPL' },
+  { to: '/players', icon: '⭐', label: 'Joueurs Pro',  desc: 'Consulte les stats des pros LEC, LCK, LCS, LPL, EMEA, VCS, LJL...' },
   { to: '/leagues', icon: '🏟️', label: 'Ligues',       desc: 'Crée ou rejoins une ligue privée ou publique' },
-  { to: '/roster',  icon: '🛡️', label: 'Mon Roster',   desc: 'Compose ton équipe de 5 joueurs (budget 100 cr.)' },
+  { to: '/roster',  icon: '🛡️', label: 'Mon Roster',   desc: 'Compose ton équipe de 5 joueurs (budget 150 cr.)' },
   { to: '/live',        icon: '🔴', label: 'En direct',    desc: 'Regarder les matchs live avec stream intégré' },
   { to: '/matches',     icon: '⚔️', label: 'Matchs',       desc: 'Résultats et stats en temps réel' },
-  { to: '/tournaments', icon: '🏆', label: 'Tournois',    desc: 'Classements LEC, LCK, LCS, LPL et playoffs' },
+  { to: '/tournaments', icon: '🏆', label: 'Tournois',    desc: 'Classements LEC, LCK, LCS, LPL, EMEA Masters et playoffs' },
   { to: '/scores',  icon: '📊', label: 'Scores',       desc: 'Classement de ta ligue et classement global' },
   { to: '/market',  icon: '💰', label: 'Marché',       desc: 'Historique de tes transferts de joueurs' },
   { to: '/social',  icon: '🌍', label: 'Social',       desc: 'Pronostics, classement et abonnements' },

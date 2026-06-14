@@ -8,14 +8,15 @@ API_KEY  = "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z"
 HEADERS  = {"x-api-key": API_KEY}
 
 LEAGUE_IDS = {
-    "LEC":   "98767991302996019",
-    "LCK":   "98767991310872058",
-    "LCS":   "98767991299243165",
-    "LPL":   "98767991314006698",
-    "VCS":   "107213827295848783",
-    "LJL":   "98767991349978712",
-    "PCS":   "104366947889790212",
-    "CBLOL": "98767991332355509",
+    "LEC":          "98767991302996019",
+    "LCK":          "98767991310872058",
+    "LCS":          "98767991299243165",
+    "LPL":          "98767991314006698",
+    "VCS":          "107213827295848783",
+    "LJL":          "98767991349978712",
+    "PCS":          "104366947889790212",
+    "CBLOL":        "98767991332355509",
+    "EMEA Masters": "100695891328981122",
 }
 
 ALL_LEAGUE_IDS = ",".join(LEAGUE_IDS.values())
@@ -55,6 +56,23 @@ def _get(endpoint, params=None):
     return r.json()
 
 
+def _is_future(start_time_iso, buffer_minutes=5):
+    """Retourne True si startTime est dans le futur (match pas encore commence).
+    Une marge de quelques minutes evite les faux positifs au demarrage du match."""
+    if not start_time_iso:
+        return False
+    try:
+        from django.utils import timezone
+        from django.utils.dateparse import parse_datetime
+        from datetime import timedelta
+        dt = parse_datetime(start_time_iso)
+        if dt is None:
+            return False
+        return dt > (timezone.now() + timedelta(minutes=buffer_minutes))
+    except Exception:
+        return False
+
+
 def _parse_event(ev):
     match = ev.get("match", {}) or {}
     teams = match.get("teams", []) or []
@@ -62,10 +80,38 @@ def _parse_event(ev):
         return None
     r1 = teams[0].get("result") or {}
     r2 = teams[1].get("result") or {}
+
+    wins1   = r1.get("gameWins", 0) or 0
+    wins2   = r2.get("gameWins", 0) or 0
+    out1    = r1.get("outcome", None)
+    out2    = r2.get("outcome", None)
+    api_state = ev.get("state", "unstarted")
+
+    # Un match qui n'a pas encore commence (startTime dans le futur) ne peut JAMAIS
+    # etre "completed" ni "inProgress" — l'API renvoie parfois des donnees obsoletes.
+    is_future = _is_future(ev.get("startTime", ""))
+
+    if is_future:
+        state = "unstarted"
+    # Correction : l'API EMEA retourne state=unstarted meme apres le match
+    # On detecte l'etat reel depuis les scores et outcomes
+    elif out1 in ("win", "loss") or out2 in ("win", "loss"):
+        state = "completed"
+    elif wins1 > 0 or wins2 > 0:
+        # Des jeux ont ete joues — match en cours ou termine
+        bo = (match.get("strategy") or {}).get("count", 1)
+        needed = (bo // 2) + 1
+        if wins1 >= needed or wins2 >= needed:
+            state = "completed"
+        else:
+            state = "inProgress"
+    else:
+        state = api_state
+
     return {
         "id"        : match.get("id", ""),
         "league"    : (ev.get("league") or {}).get("name", ""),
-        "state"     : ev.get("state", "unstarted"),
+        "state"     : state,
         "startTime" : ev.get("startTime", ""),
         "blockName" : ev.get("blockName", ""),
         "strategy"  : (match.get("strategy") or {}).get("count", 1),
@@ -73,15 +119,15 @@ def _parse_event(ev):
             "name"   : teams[0].get("name", ""),
             "code"   : teams[0].get("code", ""),
             "image"  : teams[0].get("image", ""),
-            "wins"   : r1.get("gameWins", 0),
-            "outcome": r1.get("outcome", None),
+            "wins"   : wins1,
+            "outcome": out1,
         },
         "team2": {
             "name"   : teams[1].get("name", ""),
             "code"   : teams[1].get("code", ""),
             "image"  : teams[1].get("image", ""),
-            "wins"   : r2.get("gameWins", 0),
-            "outcome": r2.get("outcome", None),
+            "wins"   : wins2,
+            "outcome": out2,
         },
     }
 

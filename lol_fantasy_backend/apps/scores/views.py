@@ -48,19 +48,29 @@ class GlobalRankingView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from django.db.models import Sum
+        from django.db.models import Sum, Count
         from apps.users.models import Utilisateur
+        from apps.scores.models import FantasyScore
+        from apps.social.models import Pronostic
 
-        users = Utilisateur.objects.annotate(
-            total=Sum('fantasy_scores__points')
-        ).order_by('-total')[:50]
+        # Points fantasy separement
+        pts_map = {}
+        for fs in FantasyScore.objects.values('user_id').annotate(t=Sum('points')):
+            pts_map[fs['user_id']] = round(fs['t'] or 0, 2)
 
-        data = [{
-            'rank':         idx + 1,
-            'username':     u.username,
-            'total_points': u.total or 0,
-        } for idx, u in enumerate(users)]
+        # Points pronostics corrects
+        prono_map = {}
+        for p in Pronostic.objects.filter(is_correct=True).values('user_id').annotate(b=Sum('points_earned')):
+            prono_map[p['user_id']] = round(p['b'] or 0, 2)
 
+        rows = []
+        for u in Utilisateur.objects.all():
+            total = round(pts_map.get(u.id, 0.0) + prono_map.get(u.id, 0.0), 2)
+            rows.append({'username': u.username, 'total_points': total})
+
+        rows.sort(key=lambda r: (-r['total_points'], r['username']))
+
+        data = [{'rank': i + 1, **r} for i, r in enumerate(rows[:50])]
         return Response(data)
 
 

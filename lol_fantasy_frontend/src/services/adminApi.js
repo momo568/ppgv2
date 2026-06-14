@@ -72,6 +72,10 @@ export const adminService = {
   deleteUser      : (id)   => AdminAPI.delete(`/admin/utilisateurs/${id}/`),
   promouvoirAdmin : (id)   => AdminAPI.post(`/admin/utilisateurs/${id}/promouvoir/`),
   retirerAdmin    : (id)   => AdminAPI.post(`/admin/utilisateurs/${id}/retirer-admin/`),
+
+  // Gestion rôle Manager
+  setManager      : (id)   => AdminAPI.post(`/admin/utilisateurs/${id}/set-manager/`),
+  unsetManager    : (id)   => AdminAPI.post(`/admin/utilisateurs/${id}/unset-manager/`),
 };
 
 export default AdminAPI;

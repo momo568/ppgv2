@@ -189,7 +189,7 @@ function TopPerformers({ players }) {
     .slice(0, 6);
 
   if (stars.length === 0)
-    return <div style={{ fontSize: 12, color: 'var(--lol-grey-2)', padding: '12px 0' }}>Pas encore de stats. Ajoute-en via Django Admin.</div>;
+    return <div style={{ fontSize: 12, color: 'var(--lol-grey-2)', padding: '12px 0' }}>Stats 2024 disponibles pour 60 joueurs top (Faker, Chovy, Zeus...).</div>;
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -262,7 +262,7 @@ export default function Overview() {
         scoreService.global(),
         leagueService.myLeagues(),
         scoreService.my(),
-        playerService.list(),
+        playerService.list({ with_stats: true }),
       ]);
 
       if (liveRes.status === 'fulfilled') {
@@ -411,8 +411,8 @@ export default function Overview() {
                 {[
                   { to: '/live',        icon: '🔴', label: 'Regarder en direct', sub: live.length > 0 ? `${live.length} match live` : 'Pas de match en ce moment', highlight: live.length > 0 },
                   { to: '/roster',      icon: '🛡️', label: 'Mon Roster',         sub: 'Gérer mon équipe de 5 joueurs' },
-                  { to: '/tournaments', icon: '🏆', label: 'Tournois',            sub: 'Classements LEC · LCK · LCS · LPL' },
-                  { to: '/players',     icon: '⭐', label: '300 joueurs pros',    sub: 'Faker, Caps, Chovy, Ruler...' },
+                  { to: '/tournaments', icon: '🏆', label: 'Tournois',            sub: 'LEC · LCK · LCS · LPL · EMEA Masters' },
+                  { to: '/players',     icon: '⭐', label: '790 joueurs pros',    sub: 'Faker, Chovy, Canyon, Caps, Carzzy...' },
                   { to: '/social',      icon: '🎯', label: 'Pronostics',          sub: 'Parie sur les résultats' },
                   { to: '/chatbot',     icon: '🤖', label: 'Chatbot',             sub: 'Aide et conseils fantasy' },
                 ].map(a => (

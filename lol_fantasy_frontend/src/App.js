@@ -30,6 +30,17 @@ import AdminVerify       from './pages/admin/AdminVerify';
 import AdminDashboard    from './pages/admin/AdminDashboard';
 import AdminDemandes     from './pages/admin/AdminDemandes';
 import AdminUtilisateurs from './pages/admin/AdminUtilisateurs';
+import AdminJoueurs      from './pages/admin/AdminJoueurs';
+import AdminLigues       from './pages/admin/AdminLigues';
+
+// Manager pages (hérite de Joueur + fonctions de gestion)
+import ManagerDashboard from './pages/manager/ManagerDashboard';
+import ManagerLeagues   from './pages/manager/ManagerLeagues';
+import ManagerMembers   from './pages/manager/ManagerMembers';
+import ManagerRosters   from './pages/manager/ManagerRosters';
+import ManagerRanking   from './pages/manager/ManagerRanking';
+import ManagerInvite    from './pages/manager/ManagerInvite';
+import ManagerAllRosters from './pages/manager/ManagerAllRosters';
 
 import './App.css';
 
@@ -39,6 +50,15 @@ function PrivateRoute({ children }) {
 
 function AdminRoute({ children }) {
   return localStorage.getItem('admin_access_token') ? children : <Navigate to="/admin/login" />;
+}
+
+// ManagerRoute : Manager uniquement (Admin a son propre panel séparé)
+function ManagerRoute({ children }) {
+  const token = localStorage.getItem('access_token');
+  if (!token) return <Navigate to="/login" />;
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.role !== 'manager') return <Navigate to="/dashboard" />;
+  return children;
 }
 
 export default function App() {
@@ -68,12 +88,24 @@ export default function App() {
         <Route path="/live"           element={<PrivateRoute><LiveWatch /></PrivateRoute>} />
         <Route path="/overview"      element={<PrivateRoute><Overview /></PrivateRoute>} />
 
-        {/* Admin */}
+        {/* ── MANAGER (hérite de Joueur + gestion) ── */}
+        <Route path="/manager/dashboard"              element={<ManagerRoute><ManagerDashboard /></ManagerRoute>} />
+        <Route path="/manager/leagues"                element={<ManagerRoute><ManagerLeagues   /></ManagerRoute>} />
+        <Route path="/manager/invite"                 element={<ManagerRoute><ManagerInvite      /></ManagerRoute>} />
+        <Route path="/manager/rosters"                element={<ManagerRoute><ManagerAllRosters  /></ManagerRoute>} />
+        <Route path="/manager/leagues/:id/members"    element={<ManagerRoute><ManagerMembers   /></ManagerRoute>} />
+        <Route path="/manager/leagues/:id/rosters"    element={<ManagerRoute><ManagerRosters   /></ManagerRoute>} />
+        <Route path="/manager/leagues/:id/ranking"    element={<ManagerRoute><ManagerRanking   /></ManagerRoute>} />
+        <Route path="/manager/rankings"               element={<ManagerRoute><ManagerRanking   /></ManagerRoute>} />
+
+        {/* Admin — périmètre : joueurs + ligues publiques + gestion comptes */}
         <Route path="/admin/login"        element={<AdminLogin />} />
         <Route path="/admin/verify"       element={<AdminVerify />} />
-        <Route path="/admin/dashboard"    element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-        <Route path="/admin/demandes"     element={<AdminRoute><AdminDemandes /></AdminRoute>} />
+        <Route path="/admin/dashboard"    element={<AdminRoute><AdminDashboard    /></AdminRoute>} />
+        <Route path="/admin/demandes"     element={<AdminRoute><AdminDemandes     /></AdminRoute>} />
         <Route path="/admin/utilisateurs" element={<AdminRoute><AdminUtilisateurs /></AdminRoute>} />
+        <Route path="/admin/joueurs"      element={<AdminRoute><AdminJoueurs      /></AdminRoute>} />
+        <Route path="/admin/ligues"       element={<AdminRoute><AdminLigues       /></AdminRoute>} />
       </Routes>
     </BrowserRouter>
   );

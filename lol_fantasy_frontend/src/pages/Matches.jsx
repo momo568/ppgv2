@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Layout from '../components/Layout';
 import { matchService } from '../services/api';
 
-const REGIONS = ['', 'LEC', 'LCK', 'LCS', 'LPL'];
+const REGIONS = ['', 'LEC', 'LCK', 'LCS', 'LPL', 'EMEA Masters', 'VCS', 'LJL', 'PCS', 'CBLOL'];
 
 function fmt(iso) {
   if (!iso) return '';
@@ -160,14 +160,26 @@ export default function Matches() {
   const [expanded, setExpanded]         = useState(null);
   const timer = useRef(null);
 
-  // Quand filtre = inProgress, on prend les matchs live (getLive) car ils ne sont pas dans getSchedule
+  // Combiner live + schedule inProgress sans doublons (deduplication par paire d'equipes)
   const liveAsSchedule = live
-    .filter(m => m.team1 && m.team2)
+    .filter(m => m.team1?.code && m.team2?.code)
     .map(m => ({ ...m, state: 'inProgress' }));
 
-  const baseSchedule = stateFilter === 'inProgress'
-    ? [...liveAsSchedule, ...schedule.filter(m => m.state === 'inProgress')]
-    : schedule.filter(m => stateFilter === 'all' || m.state === stateFilter);
+  const baseSchedule = (() => {
+    if (stateFilter !== 'inProgress') {
+      return schedule.filter(m => stateFilter === 'all' || m.state === stateFilter);
+    }
+    // Fusionner live + schedule inProgress en eliminant les doublons
+    const seen = new Set(liveAsSchedule.map(m => `${m.team1?.code}|${m.team2?.code}`));
+    const schedInProgress = schedule.filter(m => {
+      if (m.state !== 'inProgress') return false;
+      const pair = `${m.team1?.code}|${m.team2?.code}`;
+      if (seen.has(pair)) return false;
+      seen.add(pair);
+      return true;
+    });
+    return [...liveAsSchedule, ...schedInProgress];
+  })();
 
   const filteredSchedule = baseSchedule.sort((a, b) =>
     stateFilter === 'completed'
@@ -227,7 +239,7 @@ export default function Matches() {
           {live.length > 0 ? '🔴' : '⚫'} En direct
           {live.length > 0 && <span style={{ marginLeft: 6, background: '#f97316', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>{live.length}</span>}
         </button>
-        <button className={`tab ${tab === 'schedule' ? 'active' : ''}`} onClick={() => setTab('schedule')}>📅 Calendrier LEC/LCK/LCS/LPL</button>
+        <button className={`tab ${tab === 'schedule' ? 'active' : ''}`} onClick={() => setTab('schedule')}>📅 Calendrier LEC/LCK/LCS/LPL/EMEA</button>
         <button className={`tab ${tab === 'my' ? 'active' : ''}`} onClick={() => setTab('my')}>🗂️ Mes matchs</button>
       </div>
 

@@ -1,0 +1,326 @@
+\documentclass[12pt,a4paper]{report}
+
+% ===================== PACKAGES =====================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage{pgf-umlsd}   % diagrammes de sequence UML
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{titlesec}
+
+\geometry{margin=2.5cm}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+
+% Couleurs pour le code
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstset{
+  backgroundcolor=\color{backcolour},
+  commentstyle=\color{codegreen},
+  keywordstyle=\color{blue},
+  numberstyle=\tiny\color{codegray},
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true, numbers=left, frame=single, captionpos=b
+}
+
+% ===================== DOCUMENT =====================
+\begin{document}
+
+% ---------- PAGE DE GARDE ----------
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+{\Large\textbf{Université SESAME}}\\[0.3cm]
+{\large Année universitaire 2025--2026}\\[2cm]
+
+\rule{\linewidth}{0.5mm}\\[0.5cm]
+{\Huge\bfseries LoL Fantasy League}\\[0.4cm]
+{\Large Plateforme web de fantasy esports\\League of Legends}\\[0.3cm]
+\rule{\linewidth}{0.5mm}\\[2cm]
+
+{\large \textbf{Projet de fin d'année}}\\[2cm]
+
+\begin{flushleft}
+\large
+\textbf{Réalisé par :} Oumaima Kammoun\\[0.3cm]
+\textbf{Encadré par :} [Nom de l'encadrant]\\[0.3cm]
+\textbf{Filière :} [Votre filière]\\
+\end{flushleft}
+
+\vfill
+{\large \today}
+\end{titlepage}
+
+% ---------- REMERCIEMENTS ----------
+\chapter*{Remerciements}
+\addcontentsline{toc}{chapter}{Remerciements}
+Je tiens à remercier mon encadrant pour son suivi et ses conseils tout au long
+de ce projet, ainsi que le corps enseignant de l'Université SESAME pour la
+qualité de la formation dispensée.
+
+% ---------- RESUME ----------
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+Ce projet consiste en la conception et la réalisation d'une plateforme web de
+\textit{fantasy esports} dédiée à League of Legends. L'utilisateur compose une
+équipe virtuelle de cinq joueurs professionnels réels et gagne des points selon
+leurs performances lors des matchs officiels. La plateforme intègre l'API
+officielle LoL Esports en temps réel et un moteur de scoring entièrement
+automatique. Elle repose sur une architecture trois tiers : un frontend React,
+une API REST Django et une base PostgreSQL.\\[0.3cm]
+\textbf{Mots-clés :} Django, React, API REST, fantasy esports, JWT, 2FA, temps réel.
+
+% ---------- TABLE DES MATIERES ----------
+\tableofcontents
+
+% =====================================================
+\chapter{Introduction générale}
+% =====================================================
+Le \textit{fantasy sport} est un type de jeu où les participants constituent des
+équipes virtuelles de joueurs réels et marquent des points selon leurs
+performances effectives. Appliqué à l'esport League of Legends, ce concept
+permet de prolonger l'expérience des compétitions professionnelles.
+
+\section{Contexte}
+Les compétitions League of Legends (LCK, LEC, LCS, LPL, EMEA Masters) rassemblent
+des millions de spectateurs. Ce projet propose une plateforme permettant aux
+fans de participer activement en composant leurs équipes fantasy.
+
+\section{Problématique}
+Comment concevoir une plateforme qui : (1) exploite des données réelles et à jour
+des matchs professionnels, (2) calcule automatiquement et de façon fiable les
+points, et (3) reste fonctionnelle en permanence sans intervention manuelle ?
+
+\section{Objectifs}
+\begin{itemize}
+  \item Concevoir une application full-stack sécurisée (JWT + 2FA).
+  \item Intégrer l'API officielle LoL Esports en temps réel.
+  \item Développer un moteur de scoring automatique et fiable.
+  \item Offrir une expérience complète : ligues, rosters, marché, social, chatbot.
+\end{itemize}
+
+% =====================================================
+\chapter{Analyse et spécification des besoins}
+% =====================================================
+\section{Besoins fonctionnels}
+\begin{itemize}
+  \item \textbf{Authentification} : inscription, connexion à deux facteurs (2FA).
+  \item \textbf{Ligues} : création/adhésion via code d'invitation.
+  \item \textbf{Roster} : composition d'une équipe de 5 joueurs avec budget et capitaine.
+  \item \textbf{Scoring} : calcul automatique des points à chaque match.
+  \item \textbf{Marché} : historique des achats et ventes de joueurs.
+  \item \textbf{Social} : classements, pronostics, abonnements.
+  \item \textbf{Chatbot} : assistant intelligent.
+\end{itemize}
+
+\section{Besoins non fonctionnels}
+\begin{itemize}
+  \item \textbf{Sécurité} : JWT, 2FA, contrôle d'accès par rôle (RBAC).
+  \item \textbf{Fiabilité} : scoring idempotent, fonctionnement automatique permanent.
+  \item \textbf{Temps réel} : matchs en direct, scores actualisés.
+  \item \textbf{Données réelles} : aucune donnée fictive, API officielle.
+\end{itemize}
+
+\section{Acteurs du système}
+\begin{itemize}
+  \item \textbf{Joueur} : participe, compose son roster, fait des pronostics.
+  \item \textbf{Manager} : crée et gère ses ligues privées (hérite du joueur).
+  \item \textbf{Administrateur} : gère les joueurs pros et les comptes.
+\end{itemize}
+
+% =====================================================
+\chapter{Conception}
+% =====================================================
+\section{Architecture générale}
+L'application suit une architecture \textbf{trois tiers} :
+\begin{itemize}
+  \item \textbf{Couche présentation} : application React 19 (interface utilisateur).
+  \item \textbf{Couche logique} : API REST Django + Django REST Framework.
+  \item \textbf{Couche données} : base PostgreSQL.
+\end{itemize}
+Une API externe (LoL Esports) alimente les données des matchs en temps réel.
+
+\section{Diagrammes de séquence}
+
+% -------- SEQUENCE 1 : Authentification 2FA --------
+\subsection{Authentification avec double facteur (2FA)}
+\begin{figure}[h]
+\centering
+\resizebox{0.95\textwidth}{!}{
+\begin{sequencediagram}
+\newthread{u}{Utilisateur}
+\newinst{f}{Frontend React}
+\newinst{a}{API Django}
+\newinst{d}{Base PostgreSQL}
+
+\begin{call}{u}{Saisie email + mot de passe}{f}{}
+\end{call}
+\begin{call}{f}{POST /auth/login/}{a}{user\_id, otp\_method}
+  \begin{call}{a}{Vérifie identifiants}{d}{OK}
+  \end{call}
+\end{call}
+\begin{call}{u}{Choix méthode OTP}{f}{}
+\end{call}
+\begin{call}{f}{POST /auth/login/choose-otp/}{a}{QR code / code email}
+\end{call}
+\begin{call}{u}{Saisie code OTP}{f}{}
+\end{call}
+\begin{call}{f}{POST /auth/login/verify/}{a}{tokens JWT}
+  \begin{call}{a}{Vérifie code OTP}{d}{valide}
+  \end{call}
+\end{call}
+\begin{call}{f}{Stocke access + refresh token}{f}{}
+\end{call}
+\end{sequencediagram}
+}
+\caption{Séquence d'authentification à deux facteurs}
+\end{figure}
+
+% -------- SEQUENCE 2 : Composition roster --------
+\subsection{Composition d'un roster et achat de joueur}
+\begin{figure}[h]
+\centering
+\resizebox{0.95\textwidth}{!}{
+\begin{sequencediagram}
+\newthread{u}{Joueur}
+\newinst{f}{Frontend}
+\newinst{a}{API Django}
+\newinst{d}{Base PostgreSQL}
+
+\begin{call}{u}{Sélectionne un joueur}{f}{}
+\end{call}
+\begin{call}{f}{POST /rosters/<id>/add/}{a}{roster mis à jour}
+  \begin{call}{a}{Vérifie budget suffisant}{d}{OK}
+  \end{call}
+  \begin{call}{a}{Crée RosterSlot}{d}{}
+  \end{call}
+  \begin{call}{a}{Crée Transfer (achat)}{d}{}
+  \end{call}
+\end{call}
+\begin{call}{u}{Désigne le capitaine}{f}{}
+\end{call}
+\begin{call}{f}{POST /rosters/<id>/captain/}{a}{OK}
+  \begin{call}{a}{Met is\_captain=True}{d}{}
+  \end{call}
+\end{call}
+\end{sequencediagram}
+}
+\caption{Séquence de composition d'un roster}
+\end{figure}
+
+% -------- SEQUENCE 3 : Scoring automatique --------
+\subsection{Calcul automatique des scores}
+\begin{figure}[h]
+\centering
+\resizebox{0.95\textwidth}{!}{
+\begin{sequencediagram}
+\newthread{s}{Scheduler (3 min)}
+\newinst{a}{API Django}
+\newinst{e}{API LoL Esports}
+\newinst{d}{Base PostgreSQL}
+
+\begin{call}{s}{Déclenche la synchronisation}{a}{}
+  \begin{call}{a}{get\_schedule()}{e}{matchs terminés}
+  \end{call}
+  \begin{call}{a}{Récupère stats joueurs}{e}{stats (ou vide)}
+  \end{call}
+  \begin{call}{a}{Si pas de stats : génère stats de secours}{d}{}
+  \end{call}
+  \begin{call}{a}{calculate\_scores\_for\_match()}{d}{FantasyScore créés}
+  \end{call}
+  \begin{call}{a}{Recalcule totaux (idempotent)}{d}{classements à jour}
+  \end{call}
+  \begin{call}{a}{Valide les pronostics}{d}{+5 pts si correct}
+  \end{call}
+\end{call}
+\end{sequencediagram}
+}
+\caption{Séquence du calcul automatique des scores}
+\end{figure}
+
+\section{Modèle de données}
+Les principales entités sont : \texttt{Utilisateur}, \texttt{League},
+\texttt{LeagueMember}, \texttt{Roster}, \texttt{RosterSlot}, \texttt{Player},
+\texttt{Match}, \texttt{MatchPlayerStat}, \texttt{FantasyScore},
+\texttt{Transfer}, \texttt{Pronostic}. Un \texttt{Roster} appartient à un
+\texttt{Utilisateur} et une \texttt{League}, et contient 5 \texttt{RosterSlot}
+liés chacun à un \texttt{Player}.
+
+% =====================================================
+\chapter{Réalisation}
+% =====================================================
+\section{Technologies utilisées}
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Composant} & \textbf{Technologie} \\
+\midrule
+Frontend & React 19, react-router-dom, Axios \\
+Backend & Django 6, Django REST Framework \\
+Authentification & SimpleJWT + 2FA (TOTP / OTP email) \\
+Base de données & PostgreSQL 18 \\
+API externe & LoL Esports API \\
+Chatbot & Ollama (llama3.2) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Moteur de scoring (KPI)}
+La formule de calcul des points combine performance individuelle et collective :
+\[
+\text{KPI} = \left( \sum S_{\text{indiv}} \times 0.70 \right) + \left( S_{\text{équipe}} \times 0.30 \right)
+\]
+avec
+\[
+S_{\text{indiv}} = K\times 3 + A\times 2 + D\times(-1.5) + CS\times 0.02 + VS\times 0.1
+\]
+\[
+S_{\text{collectif}} = \text{Victoire}\times 5 + \text{Barons}\times 2 + \text{Dragons}\times 2 + \text{Tours}\times 1
+\]
+Le capitaine voit son score individuel multiplié par 1,5.
+
+\section{Système automatique}
+Un \textit{scheduler} en arrière-plan synchronise les matchs toutes les 3 minutes.
+Le calcul des scores est \textbf{idempotent} : les totaux sont recalculés depuis
+la somme des scores, ce qui garantit l'absence de double comptage même en cas de
+ré-exécution. Lorsque l'API ne fournit pas les statistiques détaillées, le système
+génère des statistiques de secours cohérentes afin que les points soient
+toujours calculés.
+
+% =====================================================
+\chapter{Difficultés rencontrées et solutions}
+% =====================================================
+\begin{itemize}
+  \item \textbf{Statistiques manquantes} : l'API ne fournit pas toujours les stats
+        détaillées. \textit{Solution :} génération de stats de secours.
+  \item \textbf{Double comptage} : le scoring incrémentait les totaux.
+        \textit{Solution :} rendre le calcul idempotent.
+  \item \textbf{Matchs futurs marqués terminés} : données obsolètes de l'API.
+        \textit{Solution :} garde temporelle (un match futur n'est jamais terminé).
+  \item \textbf{Points rétroactifs} : matchs antérieurs au roster comptés.
+        \textit{Solution :} ne compter que les matchs postérieurs à la création du roster.
+  \item \textbf{Streams manquants en direct} : \textit{Solution :} streams officiels
+        par défaut par ligue.
+\end{itemize}
+
+% =====================================================
+\chapter{Conclusion et perspectives}
+% =====================================================
+Ce projet a permis de concevoir une plateforme complète de fantasy esports,
+exploitant des données réelles et offrant un scoring entièrement automatique.
+L'architecture trois tiers, la sécurité (JWT + 2FA + RBAC) et la résilience du
+moteur de scoring constituent les principaux atouts techniques.
+
+\textbf{Perspectives :} système de notifications, badges et récompenses,
+statistiques avancées avec graphiques, mode tournoi à élimination directe,
+échanges de joueurs entre membres, gestion de saisons.
+
+\end{document}

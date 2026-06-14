@@ -43,6 +43,11 @@ def calculate_scores_for_match(match):
 
     count = 0
     for roster in rosters:
+        # Regle fantasy : un roster ne marque QUE pour les matchs joues
+        # APRES sa creation (pas de points retroactifs sur des matchs passes).
+        if match.date < roster.created_at:
+            continue
+
         slots = list(roster.slots.select_related('player').all())
         breakdown = {}
 
@@ -87,11 +92,20 @@ def calculate_scores_for_match(match):
                 },
             },
         )
+        # IDEMPOTENT : on RECALCULE le total depuis la somme des scores
+        # (jamais d'incrementation -> re-executer la sync ne double JAMAIS les points)
+        league_total = FantasyScore.objects.filter(
+            league=roster.league, user=roster.user
+        ).aggregate(t=models.Sum('points'))['t'] or 0
         LeagueMember.objects.filter(
             league=roster.league, user=roster.user
-        ).update(total_points=models.F('total_points') + kpi_total)
-        roster.user.points = roster.user.points + int(kpi_total)
-        roster.user.niveau = max(1, roster.user.points // 50 + 1)
+        ).update(total_points=round(league_total, 2))
+
+        user_total = FantasyScore.objects.filter(
+            user=roster.user
+        ).aggregate(t=models.Sum('points'))['t'] or 0
+        roster.user.points = int(user_total)
+        roster.user.niveau = max(1, int(user_total) // 50 + 1)
         roster.user.save(update_fields=['points', 'niveau'])
         count += 1
 

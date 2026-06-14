@@ -134,7 +134,11 @@ export default function Scores() {
           {myScores.length === 0 ? (
             <div className="empty-state">
               <span className="empty-icon">📊</span>
-              <p>Aucun score encore. Compose un roster et attends les matchs !</p>
+              <p>Aucun score encore pour tes ligues.</p>
+              <p style={{ fontSize: 12, marginTop: 8, color: 'var(--lol-grey-2)' }}>
+                Les points sont calculés quand un joueur de ton roster joue un match.
+                Si tes joueurs n'ont pas joué TLAW vs C9, attends GEN vs T1 demain à 07h00 !
+              </p>
             </div>
           ) : (
             <div className="table-wrap">
@@ -153,7 +157,7 @@ export default function Scores() {
                     <tr key={s.id}>
                       <td style={{ fontWeight: 600 }}>{s.match_info.team1} vs {s.match_info.team2}</td>
                       <td style={{ color: 'var(--lol-grey-1)' }}>{s.match_info.tournament}</td>
-                      <td style={{ color: 'var(--lol-grey-1)', fontSize: 12 }}>{s.league}</td>
+                      <td style={{ color: 'var(--lol-grey-1)', fontSize: 12 }}>{s.league_name}</td>
                       <td style={{ color: 'var(--lol-grey-1)', fontSize: 12 }}>{s.match_info.date}</td>
                       <td style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--lol-gold-1)', fontWeight: 700 }}>
                         {s.points}

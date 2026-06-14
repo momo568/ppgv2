@@ -7,6 +7,124 @@ from .models import ProTeam, Match, MatchPlayerStat
 from .serializers import ProTeamSerializer, MatchSerializer, MatchPlayerStatSerializer
 from . import lolesports
 
+import threading
+_sync_lock = threading.Lock()
+_last_sync = [0]  # timestamp derniere sync
+
+def _auto_sync_background():
+    """Synchronise les matchs termines en arriere-plan (max 1 fois toutes les 5 min)."""
+    import time
+    now = time.time()
+    with _sync_lock:
+        if now - _last_sync[0] < 300:  # 5 minutes entre chaque sync
+            return
+        _last_sync[0] = now
+
+    try:
+        from django.utils import timezone
+        from django.utils.dateparse import parse_datetime
+        from apps.players.models import Player
+        from apps.scores.models import calculate_scores_for_match
+        from apps.social.models import Pronostic
+
+        schedule = lolesports.get_schedule()
+        completed = [m for m in schedule if m.get('state') == 'completed' and m.get('id')]
+
+        for m_api in completed:
+            ext_id = str(m_api['id'])
+            # Skip seulement si deja fini ET deja score (sinon on (re)calcule)
+            done = Match.objects.filter(external_id=ext_id, status='finished').first()
+            if done and done.player_stats.exists():
+                continue
+
+            t1d = m_api.get('team1') or {}
+            t2d = m_api.get('team2') or {}
+            t1c = t1d.get('code', '')
+            t2c = t2d.get('code', '')
+            if not t1c or not t2c:
+                continue
+
+            rg = (m_api.get('league') or 'LCK')[:6]
+            team1, _ = ProTeam.objects.get_or_create(acronym=t1c, defaults={'name': t1d.get('name', t1c), 'region': rg})
+            team2, _ = ProTeam.objects.get_or_create(acronym=t2c, defaults={'name': t2d.get('name', t2c), 'region': rg})
+
+            t1w = t1d.get('wins', 0) or 0
+            t2w = t2d.get('wins', 0) or 0
+            winner = team1 if (t1d.get('outcome') == 'win' or t1w > t2w) else (team2 if (t2d.get('outcome') == 'win' or t2w > t1w) else None)
+
+            start = m_api.get('startTime', '')
+            date = parse_datetime(start) if start else timezone.now()
+
+            match_obj, _ = Match.objects.update_or_create(
+                external_id=ext_id,
+                defaults={
+                    'team1': team1, 'team2': team2,
+                    'region': m_api.get('league', 'LCK')[:6],
+                    'tournament': (m_api.get('blockName') or m_api.get('league', ''))[:100],
+                    'date': date or timezone.now(),
+                    'status': 'finished',
+                    'winner': winner,
+                    'team1_score': t1w,
+                    'team2_score': t2w,
+                }
+            )
+
+            # Valider les pronostics (toujours, meme sans roster concerne)
+            for prono in Pronostic.objects.filter(match=match_obj, is_correct__isnull=True):
+                prono.is_correct = (prono.predicted_winner == winner)
+                prono.points_earned = 5 if prono.is_correct else 0
+                prono.save()
+
+            # Si aucun joueur du match n'est dans un roster : pas d'appel API couteux,
+            # pas de scoring. On garde juste le resultat pour l'affichage du calendrier.
+            from apps.matches.scoring_helper import has_rostered_player, ensure_scores
+            if not has_rostered_player(match_obj):
+                continue
+
+            # Stats joueurs depuis l'API (best-effort)
+            try:
+                result = lolesports.get_match_result(ext_id)
+            except Exception:
+                result = None
+
+            if result and result.get('players'):
+                ts_map = result.get('team_stats', {})
+                for ign, pd in result['players'].items():
+                    pl = Player.objects.filter(in_game_name__iexact=ign).first()
+                    if not pl:
+                        continue
+                    tc = pd.get('team_code', '')
+                    ts = ts_map.get(tc, {})
+                    won = pd.get('won') or (tc == (team1.acronym if winner == team1 else ''))
+                    MatchPlayerStat.objects.update_or_create(
+                        match=match_obj, player=pl,
+                        defaults={
+                            'kills': int(pd.get('kills') or 0),
+                            'deaths': int(pd.get('deaths') or 0),
+                            'assists': int(pd.get('assists') or 0),
+                            'cs': int(pd.get('cs') or 0),
+                            'vision_score': int(pd.get('vision') or 0),
+                            'gold': int(pd.get('gold') or 0),
+                            'damage': int(pd.get('damage') or 0),
+                            'duration_minutes': float(pd.get('duration') or 30),
+                            'won': bool(won),
+                            'team_towers': int(ts.get('towers') or 0),
+                            'team_dragons': int(ts.get('dragons') or 0),
+                            'team_barons': int(ts.get('barons') or 0),
+                        }
+                    )
+
+            # Garantir stats + scores (genere des stats fallback si l'API n'en a pas)
+            ensure_scores(match_obj)
+
+        # Mettre a jour les matchs live
+        for m_api in schedule:
+            if m_api.get('state') == 'inProgress' and m_api.get('id'):
+                Match.objects.filter(external_id=str(m_api['id']), status='scheduled').update(status='live')
+
+    except Exception:
+        pass  # sync silencieuse, ne jamais crasher la requete
+
 
 class IsAdminUser(IsAuthenticated):
     def has_permission(self, request, view):
@@ -134,6 +252,31 @@ class MatchStatsView(APIView):
         return Response(s.errors, status=400)
 
 
+# Streams officiels par defaut (chaines Twitch des broadcasts officiels)
+# Utilise quand l'API getLive ne retourne pas le stream d'un match en cours
+DEFAULT_LEAGUE_STREAMS = {
+    'LCK':          [{'provider': 'twitch', 'locale': 'en-US', 'param': 'lck'}],
+    'LEC':          [{'provider': 'twitch', 'locale': 'en-US', 'param': 'lec'}],
+    'LCS':          [{'provider': 'twitch', 'locale': 'en-US', 'param': 'lcs'}],
+    'LPL':          [{'provider': 'twitch', 'locale': 'en-US', 'param': 'lpl'}],
+    'EMEA Masters': [{'provider': 'twitch', 'locale': 'en-US', 'param': 'emea_masters'}],
+    'PCS':          [{'provider': 'twitch', 'locale': 'en-US', 'param': 'lolpacific'}],
+    'CBLOL':        [{'provider': 'twitch', 'locale': 'pt-BR', 'param': 'cblol'}],
+    'LJL':          [{'provider': 'twitch', 'locale': 'ja-JP', 'param': 'riotgamesjp'}],
+    'VCS':          [{'provider': 'youtube', 'locale': 'vi-VN', 'param': ''}],
+}
+
+def _default_streams_for(league_name):
+    """Retourne les streams par defaut pour une ligue (matching souple)."""
+    if not league_name:
+        return []
+    for key, streams in DEFAULT_LEAGUE_STREAMS.items():
+        if key.lower() in league_name.lower() or league_name.lower() in key.lower():
+            # Filtrer les streams sans param (placeholder)
+            return [s for s in streams if s.get('param')]
+    return []
+
+
 # ── MATCHS EN DIRECT + RÉCEMMENT TERMINÉS ────────────
 class LiveEsportsView(APIView):
     permission_classes = [AllowAny]
@@ -142,6 +285,69 @@ class LiveEsportsView(APIView):
         try:
             live = lolesports.get_live()
             recently_finished = lolesports.get_recently_finished(limit=8)
+
+            # Enrichir avec les matchs en cours depuis le calendrier
+            # (utile pour EMEA Triplex : getLive retourne "? vs ?" sans equipes)
+            try:
+                schedule = lolesports.get_schedule()
+                # Cles de deduplication : ID OU pair d'equipes
+                live_ids   = {str(ev.get('id', '')) for ev in live}
+                live_pairs = {
+                    f"{(ev.get('team1') or {}).get('code','')}|{(ev.get('team2') or {}).get('code','')}"
+                    for ev in live
+                    if (ev.get('team1') or {}).get('code')
+                }
+
+                # Recuperer les streams de l'event anonyme (? vs ?) pour les partager
+                shared_streams = []
+                anon_idx = None
+                for i, ev in enumerate(live):
+                    t1c = (ev.get('team1') or {}).get('code', '')
+                    t2c = (ev.get('team2') or {}).get('code', '')
+                    if not t1c and not t2c and ev.get('streams'):
+                        shared_streams = ev.get('streams', [])
+                        anon_idx = i
+                        break
+
+                added = []
+                for m in schedule:
+                    if m.get('state') != 'inProgress':
+                        continue
+                    mid  = str(m.get('id', ''))
+                    t1   = m.get('team1') or {}
+                    t2   = m.get('team2') or {}
+                    c1   = t1.get('code', '')
+                    c2   = t2.get('code', '')
+                    pair = f"{c1}|{c2}"
+                    # Deduplication par ID ET par paire d'equipes
+                    if mid in live_ids or pair in live_pairs or not c1 or not c2:
+                        continue
+                    league_name = m.get('league', '')
+                    # Stream : event anonyme partage, sinon stream officiel de la ligue
+                    match_streams = shared_streams or _default_streams_for(league_name)
+                    added.append({
+                        'id'       : mid,
+                        'type'     : 'match',
+                        'state'    : 'inProgress',
+                        'startTime': m.get('startTime', ''),
+                        'league'   : league_name,
+                        'blockName': m.get('blockName', ''),
+                        'leagueImg': '',
+                        'streams'  : match_streams,
+                        'strategy' : m.get('strategy', 1),
+                        'team1'    : t1,
+                        'team2'    : t2,
+                    })
+                    live_pairs.add(pair)  # eviter doublons dans la boucle
+
+                # Supprimer l'event anonyme si on a des matchs identifies
+                if added and anon_idx is not None:
+                    live.pop(anon_idx)
+
+                live.extend(added)
+            except Exception:
+                pass
+
             return Response({
                 "live"             : live,
                 "recently_finished": recently_finished,
@@ -159,6 +365,9 @@ class ScheduleEsportsView(APIView):
         league = request.query_params.get("league", "")
         try:
             data = lolesports.get_schedule(league if league else None)
+            # Auto-sync en arriere-plan : detecte les matchs termines et calcule les scores
+            import threading
+            threading.Thread(target=_auto_sync_background, daemon=True).start()
             return Response({"schedule": data, "count": len(data)})
         except Exception as e:
             return Response({"schedule": [], "count": 0, "error": str(e)})

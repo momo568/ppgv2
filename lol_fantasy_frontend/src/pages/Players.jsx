@@ -3,7 +3,7 @@ import Layout from '../components/Layout';
 import { playerService } from '../services/api';
 
 const ROLE_ICONS = { top: '🗡️', jungle: '🌿', mid: '🔮', adc: '🏹', support: '🛡️' };
-const REGIONS    = ['', 'LEC', 'LCK', 'LCS', 'LPL'];
+const REGIONS    = ['', 'LEC', 'LCK', 'LCS', 'LPL', 'VCS', 'LJL', 'PCS', 'CBLOL'];
 const ROLES      = ['', 'top', 'jungle', 'mid', 'adc', 'support'];
 
 function PlayerAvatar({ player }) {
